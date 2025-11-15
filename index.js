@@ -11,6 +11,9 @@ class GameOfLife {
     isSelecting = false;
     state = "pause";
     worker = new Worker("worker.js");
+    ctx = null;
+    cellwidth = 0;
+    cellheight = 0;
 
     // 8 DIRECTIONS ALONG THE CURRENT ELEMENT
     static DIRECTIONS = [
@@ -41,22 +44,17 @@ class GameOfLife {
 
 
     constructor($container, $generation, rows=30, cols=30) {
+
         this.$container = $container;
+        this.ctx = this.$container.getContext('2d');
         this.rows = rows;
         this.cols = cols;
+        this.cellwidth = this.$container.width / this.cols;
+        this.cellheight = this.$container.height / this.rows;
 
         this.$generation = $generation;
 
         this.worker.postMessage({id: "initialize", payload: {rows: this.rows, cols: this.cols}});
-
-        this.$container.addEventListener('click', (e) => {
-                const [row, col] = this.getGridCoords(e);
-
-                if (row >= 0 && row < this.rows && col >= 0 && col < this.cols) {
-                    this.pattern[row][col] = 1;
-                    this.update();
-                }
-        });
 
         this.$container.addEventListener("mousedown", (e) => {
             this.isSelecting = true;
@@ -69,77 +67,65 @@ class GameOfLife {
                     this.pattern[row][col] = this.pattern[row][col] = 1;
                     this.updateCell(col, row);
                 }
+
             }
         });
 
         this.$container.addEventListener("mouseup", (e) => {
             this.isSelecting = false;
         });
-
         
-
         this.worker.onmessage = (ev) =>  {
             const {id, data} = ev.data;
-            this.pattern = data;
-
+            
             if(id === "initialize") {
+                this.pattern = data;
                 this.init();
             }
+
+            if(id === "calculateNextStep") {
+                for(const [posx, posy, state] of data) {
+                    this.pattern[posx][posy] = state;
+                    this.updateCell(posy, posx);
+                }
+                this.$generation.textContent = this.generation;
+            }
         }
-
-
     }
 
     getGridCoords(e) {
-        // 1. Get coordinates relative to the canvas
         const localX = e.offsetX;
         const localY = e.offsetY;
-        
-        // Canvas size divided by grid dimensions
-        const cellWidth = this.$container.width / this.cols;
-        const cellHeight = this.$container.height / this.rows;
-
-        // 3. Map pixels to grid indices
-        // X (horizontal) maps to Column (j index)
-        const col = Math.floor(localX / cellWidth);
-        // Y (vertical) maps to Row (i index)
-        const row = Math.floor(localY / cellHeight); 
+        const col = Math.floor(localX / this.cellwidth);
+        const row = Math.floor(localY / this.cellheight); 
 
         return [row, col];
     }
     
     init() {
-        // Canvas Cell  Height, and Width
-       const height = this.$container.height / this.rows;
-       const width = this.$container.width / this.cols;
-       const ctx = this.$container.getContext('2d');
+        let x = 0, y = 0;
 
-       let x = 0, y = 0;
+        for (let i = 0; i < this.rows; i++) {
+            for (let j = 0; j < this.cols; j++) {
+                // Fill the cell, leaving space for grid lines
+                this.ctx.fillStyle = this.pattern[i][j] ? "green" : "white";
+                this.ctx.fillRect(
+                    x + 0.5, y + 0.5,
+                    this.cellwidth - 1, this.cellheight - 1
+                );
 
-       for(let i = 0; i < this.rows; i++) {
-            for(let j = 0; j < this.cols; j++) {
-                ctx.beginPath();
-                ctx.rect(x, y, width, height);
-                ctx.strokeStyle = "red";
-                ctx.stroke();
-                if(this.pattern[i][j]) {
-                    ctx.fillStyle = "red";
-                    ctx.fill();
-                } 
-                
-                else {
-                    ctx.fillStyle = "white";
-                    ctx.fill();
-                }
+                // Draw red grid lines
+                this.ctx.strokeStyle = "red";
+                this.ctx.lineWidth = 1;
+                this.ctx.strokeRect(x, y, this.cellwidth, this.cellheight);
 
-                x += width;
+                x += this.cellwidth;
             }
-
-            y += height;
+            y += this.cellheight;
             x = 0;
-       }
+        }
 
-       this.$generation.textContent = 0;
+        this.$generation.textContent = 0;
     }
 
 
@@ -159,7 +145,6 @@ class GameOfLife {
 
     nextGeneration() {
         this.#calculateNextState();
-        this.update();
     }
 
 
@@ -177,6 +162,8 @@ class GameOfLife {
         if(rows === this.rows && cols === this.cols) return;
         this.rows = rows;
         this.cols = cols;
+        this.cellwidth = this.$container.width / this.cols;
+        this.cellheight = this.$container.height / this.rows;
         
         this.pattern = new Array(this.rows).fill(null).map(_ => new Array(this.cols).fill(0));
         this.generation = 0;
@@ -185,56 +172,49 @@ class GameOfLife {
     }
 
     updateCell(posx, posy) {
-       const height = this.$container.height / this.rows;
-       const width = this.$container.width / this.cols;
-       const ctx = this.$container.getContext('2d');
+        const x = this.cellwidth * posx;
+        const y = this.cellheight * posy;
 
-       const x = width * posx, y = height * posy;
-       ctx.clearRect(x, y, width, height);
-       ctx.beginPath();
-       ctx.rect(x, y, width, height);
-       ctx.strokeStyle = "red";
-       ctx.stroke();
+        // Clear the entire cell
+        this.ctx.clearRect(x, y, this.cellwidth, this.cellheight);
 
-       if(this.pattern[posy][posx] === 1) {
-            ctx.fillStyle = "red";
-            ctx.fill();
-        } else {
-            ctx.fillStyle = "white";
-            ctx.fill();
-        }
+        // Set fill color based on pattern
+        this.ctx.fillStyle = this.pattern[posy][posx] === 1 ? "green" : "white";
+
+        // Fill the cell, leaving space for grid lines
+        this.ctx.fillRect(
+            x + 0.5, y + 0.5,
+            this.cellwidth - 1, this.cellheight - 1
+        );
+
+        // Redraw grid lines for this cell
+        this.ctx.strokeStyle = "red"; // Red grid lines
+        this.ctx.lineWidth = 1;
+        this.ctx.strokeRect(x, y, this.cellwidth, this.cellheight);
     }
 
 
     update() {
+        let x = 0, y = 0;
+        this.ctx.clearRect(0, 0, this.$container.width, this.$container.height);
 
-       const height = this.$container.height / this.rows;
-       const width = this.$container.width / this.cols;
-       const ctx = this.$container.getContext('2d');
+        for (let i = 0; i < this.rows; i++) {
+            for (let j = 0; j < this.cols; j++) {
+                // Fill the cell, leaving space for grid lines
+                this.ctx.fillStyle = this.pattern[i][j] === 1 ? "green" : "white";
+                this.ctx.fillRect(
+                    x + 0.5, y + 0.5,
+                    this.cellwidth - 1, this.cellheight - 1
+                );
 
-       let x = 0, y = 0;
-        ctx.clearRect(0, 0, this.$container.width, this.$container.height);
-        ctx.moveTo(x, y);
-        for(let i = 0; i < this.rows; i++) {
-            for(let j = 0; j < this.cols; j++) {
-                
-                ctx.beginPath();
-                ctx.rect(x, y, width, height);
-                ctx.strokeStyle = "red";
-                ctx.stroke();
+                // Draw red grid lines
+                this.ctx.strokeStyle = "red";
+                this.ctx.lineWidth = 1;
+                this.ctx.strokeRect(x, y, this.cellwidth, this.cellheight);
 
-                if(this.pattern[i][j] === 1) {
-                    ctx.fillStyle = "red";
-                    ctx.fill();
-                } else {
-                    ctx.fillStyle = "white";
-                    ctx.fill();
-                }
-
-                x += width;
+                x += this.cellwidth;
             }
-
-            y += height;
+            y += this.cellheight;
             x = 0;
         }
 

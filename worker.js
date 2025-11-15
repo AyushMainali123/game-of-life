@@ -1,7 +1,11 @@
+
+
 onmessage = function(message) {
  const {id, payload} = message.data;  
 
+
  if(id === "calculateNextStep") {
+     const updatedCells = [];
      const { rows, cols, directions, pattern } = payload;
      let newState = new Array(rows).fill(null).map(_ => new Array(cols).fill(0));
         for(let posx = 0; posx < rows; posx++) {
@@ -18,12 +22,17 @@ onmessage = function(message) {
                 }
     
     
-                if(currentcell === 1 && (aliveNeighbors < 2 || aliveNeighbors > 3)) newState[posx][posy] = 0;
-                else if (currentcell === 1 || (currentcell === 0 && aliveNeighbors === 3)) newState[posx][posy] = 1;
-                else newState[posx][posy] = 0;
+                if(currentcell === 1 && (aliveNeighbors < 2 || aliveNeighbors > 3)) {
+                    newState[posx][posy] = 0;
+                    updatedCells.push([posx, posy, 0]);
+                }
+                else if (currentcell === 0 && aliveNeighbors === 3) {
+                    newState[posx][posy] = 1;
+                    updatedCells.push([posx, posy, 1]);
+                }
             }
         }
-        this.postMessage({id: "calculateNextStep", data: newState});
+        this.postMessage({id: "calculateNextStep", data: updatedCells});
  }
 
 if(id === "initialize") {
