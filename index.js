@@ -158,6 +158,8 @@ class GameOfLife {
             }
         }
 
+        this.pause();
+        this.generation = 0;
         this.update();
     }
 
@@ -264,6 +266,8 @@ async function  main() {
     const generationContainer = document.querySelector("[data-generation]");
     const playButton = document.querySelector("[data-play]");
     const pauseButton = document.querySelector("[data-pause]");
+    const clearButton = document.querySelector("[data-clear]");
+
     const speedValue = document.querySelector("[data-speed-value]");
 
     const rowsInput = document.querySelector("#rows-input");
@@ -310,6 +314,10 @@ async function  main() {
 
         game.updateRowsAndColumns(rowValue, colValue);
     }) 
+
+    clearButton.addEventListener("click", e => {
+        game.reset();
+    });
 }
 
 

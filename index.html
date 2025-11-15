@@ -15,6 +15,11 @@
             <button data-pause>
                 ⏸️ Pause Simulation
             </button>
+            <button data-clear>
+                🆑 Clear Board
+            </button>
+
+            <br />
 
             <div class="input-group">
                 <label for="speed-input">Speed (ms per generation)</label>
@@ -24,21 +29,21 @@
                     data-speed-input 
                     min="10" 
                     max="500" 
-                    value="100"
+                    value="500"
                 >
                 <span style="font-size: 0.9rem; color: #ccc;">
-                    <span data-speed-value>100</span> ms
+                    <span data-speed-value>500</span> ms
                 </span>
             </div>
 
             <div class="controls-group">
                 <div class="input-group">
                     <label for="rows-input">Rows</label>
-                    <input type="number" id="rows-input" data-rows-input value="20" min="10" max="500" aria-valuemin="10" aria-valuemax="500">
+                    <input type="number" id="rows-input" data-rows-input value="100" min="10" max="500" aria-valuemin="10" aria-valuemax="500">
                 </div>
                 <div class="input-group">
                     <label for="cols-input">Columns</label>
-                    <input type="number" id="cols-input" data-cols-input value="20" min="10" max="500" aria-valuemin="10" aria-valuemax="500">
+                    <input type="number" id="cols-input" data-cols-input value="100" min="10" max="500" aria-valuemin="10" aria-valuemax="500">
                 </div>
                 <button data-restart-game>
                     Apply Settings & Clear
