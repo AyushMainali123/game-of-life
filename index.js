@@ -14,6 +14,7 @@ class GameOfLife {
     ctx = null;
     cellwidth = 0;
     cellheight = 0;
+    speed = 500;
 
     // 8 DIRECTIONS ALONG THE CURRENT ELEMENT
     static DIRECTIONS = [
@@ -43,12 +44,14 @@ class GameOfLife {
     ];
 
 
-    constructor($container, $generation, rows=30, cols=30) {
+    constructor($container, $generation, $speed, rows=30, cols=30, speed = 500) {
 
         this.$container = $container;
+        this.$speed = $speed;
         this.ctx = this.$container.getContext('2d');
         this.rows = rows;
         this.cols = cols;
+        this.speed = speed;
         this.cellwidth = this.$container.width / this.cols;
         this.cellheight = this.$container.height / this.rows;
 
@@ -227,7 +230,7 @@ class GameOfLife {
         this.state = "play";
 
         let lastTime = 0;
-        const interval = 500; // ms
+        const interval = this.speed; // ms
         const loop = (currentTime) => {
             if (currentTime - lastTime >= interval) {
                 lastTime = currentTime;
@@ -244,6 +247,15 @@ class GameOfLife {
         cancelAnimationFrame(this.intervalId);
     }
 
+    changeSpeed(newSpeed) {
+        this.speed = newSpeed;
+        if(this.state === "play") {
+            this.pause();
+            this.play();
+        }
+    }
+
+
 }
 
 
@@ -252,10 +264,13 @@ async function  main() {
     const generationContainer = document.querySelector("[data-generation]");
     const playButton = document.querySelector("[data-play]");
     const pauseButton = document.querySelector("[data-pause]");
+    const speedValue = document.querySelector("[data-speed-value]");
 
     const rowsInput = document.querySelector("#rows-input");
     const colsInput = document.querySelector("#cols-input");
     const restartGameButton = document.querySelector("[data-restart-game]");
+    const speedInput = document.querySelector("[data-speed-input]");
+
 
     const resizeCanvas = () => {
         const wrapper = document.getElementById('canvas-wrapper');
@@ -267,10 +282,17 @@ async function  main() {
     window.addEventListener('resize', resizeCanvas);
 
 
-    const game = new GameOfLife(container, generationContainer, Number(rowsInput.value), Number(colsInput.value));
+    const game = new GameOfLife(container, generationContainer, speedInput, Number(rowsInput.value), Number(colsInput.value), Number(speedInput.value));
     window.addEventListener('resize', () => game.update());
     playButton.addEventListener('click', () => game.play());
     pauseButton.addEventListener('click', () => game.pause());
+
+
+
+    speedInput.addEventListener('input', () => {
+        speedValue.textContent = speedInput.value;
+        game.changeSpeed(Number(speedInput.value));
+    });
 
     restartGameButton.addEventListener("click", e => {
         const rowValue = Number(rowsInput.value);

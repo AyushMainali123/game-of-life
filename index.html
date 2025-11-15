@@ -16,6 +16,21 @@
                 ⏸️ Pause Simulation
             </button>
 
+            <div class="input-group">
+                <label for="speed-input">Speed (ms per generation)</label>
+                <input 
+                    type="range" 
+                    id="speed-input" 
+                    data-speed-input 
+                    min="10" 
+                    max="500" 
+                    value="100"
+                >
+                <span style="font-size: 0.9rem; color: #ccc;">
+                    <span data-speed-value>100</span> ms
+                </span>
+            </div>
+
             <div class="controls-group">
                 <div class="input-group">
                     <label for="rows-input">Rows</label>
@@ -29,6 +44,7 @@
                     Apply Settings & Clear
                 </button>
             </div>
+            
 
             <!-- Placeholder for future controls -->
             <div style="color: #999; font-size: 0.9em; margin-top: 10px;">
